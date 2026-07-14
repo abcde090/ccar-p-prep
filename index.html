@@ -129,6 +129,33 @@
   .domhead{font-size:16px;font-weight:800;margin:22px 0 6px;padding-bottom:6px;border-bottom:2px solid var(--line)}
   .exp.neutral{background:#fbf7f2;border:1px solid var(--line)}
   .exp .refl{display:inline-block;margin-top:8px;font-size:12.5px;font-weight:600}
+
+  /* ---- courses tracker ---- */
+  .cprog{background:linear-gradient(135deg,#2a2521,#3b332c);color:#fff;border-radius:14px;padding:18px 20px;margin:10px 0 4px}
+  .cprog .big{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+  .cprog .sub2{font-size:13px;color:#d9cfc5}
+  .cprog .pctnum{font-size:30px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums}
+  .cprog .progress{background:rgba(255,255,255,.16);margin:12px 0 2px}
+  .cprog .progress>div{background:linear-gradient(90deg,var(--d1),var(--d2),var(--d3),var(--d4),var(--d5))}
+  .course{display:flex;gap:14px;align-items:flex-start;padding:16px 2px;border-bottom:1px solid var(--line)}
+  .course:last-child{border-bottom:0}
+  .course .ico{font-size:24px;line-height:1;flex-shrink:0;width:30px;text-align:center;margin-top:2px}
+  .course .cbody{flex:1;min-width:0}
+  .course .ctitle{font-size:16px;font-weight:800;margin:0}
+  .course .cdesc{font-size:13.5px;color:var(--muted);margin:3px 0 8px}
+  .course.done .ctitle{text-decoration:line-through;color:var(--muted)}
+  .course.done .ico{opacity:.4}
+  .cmeta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .cmin{font-size:12px;font-weight:700;color:var(--accent-dk);background:#fbf1ea;border-radius:6px;padding:3px 9px}
+  .dchip{font-size:11.5px;font-weight:600;border-radius:6px;padding:3px 8px;border:1.5px solid;background:transparent}
+  .ccheck{flex-shrink:0;width:26px;height:26px;border-radius:8px;border:2px solid var(--line);background:var(--panel);cursor:pointer;font-size:15px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;margin-top:2px;transition:.15s}
+  .ccheck:hover{border-color:var(--accent)}
+  .ccheck.on{background:var(--good);border-color:var(--good)}
+  .sched .line{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line);font-size:14px}
+  .sched .line:last-child{border-bottom:0}
+  .sched .day{font-weight:800;color:var(--accent-dk);width:60px;flex-shrink:0}
+  .perday{font-size:22px;font-weight:800;color:var(--accent-dk);font-variant-numeric:tabular-nums}
+  input.days{width:84px;padding:9px 10px;border:1.5px solid var(--line);border-radius:10px;font-size:14px}
 </style>
 </head>
 <body>
@@ -141,6 +168,7 @@
 
 <nav class="tabs"><div class="wrap">
   <button data-view="overview" class="active">Overview</button>
+  <button data-view="courses">Courses</button>
   <button data-view="guide">Study Guide</button>
   <button data-view="drill">Practice by Domain</button>
   <button data-view="exam">Full Mock Exam</button>
@@ -185,6 +213,38 @@
     <p><b>Week 1 — Foundations &amp; design.</b> Domains 1–2. Build one small end-to-end Claude app. Nail model selection trade-offs, prompt/context engineering, and prompt caching.</p>
     <p><b>Week 2 — Integration &amp; quality.</b> Domains 3–4. Stand up a RAG pipeline; add tool use / MCP; write evals; practice diagnosing failures (retrieval vs. prompt vs. model).</p>
     <p><b>Week 3 — Govern, communicate, operate.</b> Domains 5–7. Guardrails, least privilege, HITL, compliance; stakeholder communication and lifecycle; Claude Code / developer enablement. Then take the full mock twice.</p>
+  </div>
+</section>
+
+<!-- ============ COURSES ============ -->
+<section class="view" id="courses">
+  <div class="card">
+    <h2>Official Anthropic courses</h2>
+    <p class="lead">The five official learning courses for the Claude Certified Architect — Professional. Tick each one off as you finish — your progress is saved on this device — and see which exam domains each course feeds.</p>
+    <div class="cprog">
+      <div class="row" style="justify-content:space-between;align-items:flex-end">
+        <div><div class="big" id="cDone">0 / 5</div><div class="sub2" id="cMinTxt">0 of 733 min complete</div></div>
+        <div class="pctnum" id="cPct">0%</div>
+      </div>
+      <div class="progress"><div id="cBar" style="width:0"></div></div>
+    </div>
+    <div id="courseList"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost" id="cReset">Reset progress</button>
+      <span class="note" id="cLeft"></span>
+    </div>
+  </div>
+
+  <div class="card sched">
+    <h2>Fit it into your schedule</h2>
+    <p class="lead">You have <b id="cRemainMin">733</b> minutes of course left. Enter how many days until your exam and see the daily pace to finish — leaving room for the drills and mock exams in this app.</p>
+    <div class="row" style="margin:8px 0 12px">
+      <label class="note" for="cDays">Days until exam</label>
+      <input class="days" id="cDays" type="number" min="1" max="365" value="14">
+      <span style="font-size:14px">→ <span class="perday" id="cPerDay">—</span> <span class="note">per day</span></span>
+    </div>
+    <div id="cSchedule"></div>
+    <p class="disc">Pace splits the remaining course minutes evenly across your days. Completed courses drop out of the plan automatically.</p>
   </div>
 </section>
 
@@ -708,6 +768,88 @@ $$("nav.tabs button").forEach(b=>b.addEventListener("click",()=>{
   });
   h+="<tr><td></td><td><b>Total</b></td><td><b>100%</b></td><td></td><td><b>63</b></td></tr>";
   $("#wtTable").innerHTML=h;
+})();
+
+/* ---- courses tracker ---- */
+(function(){
+  const COURSES=[
+    {id:"c1",ico:"🏛️",t:"Claude Platform & Solution Design",short:"Platform & Solution Design",
+     d:"Master the design decisions that translate an ambiguous business problem into a defensible Claude solution architecture.",min:238,doms:[1,2]},
+    {id:"c2",ico:"⚙️",t:"Enterprise Integration & Production",short:"Enterprise Integration",
+     d:"Take a designed solution from proof of concept to enterprise-ready production.",min:158,doms:[3,4]},
+    {id:"c3",ico:"🛡️",t:"Responsible AI, Safety & Risk for Architects",short:"Responsible AI & Risk",
+     d:"Design the full safety stack for a Claude system, placing each control and deciding what happens when one fails.",min:114,doms:[5]},
+    {id:"c4",ico:"🤝",t:"Stakeholder Engagement, Lifecycle & GTM",short:"Stakeholder & GTM",
+     d:"Lead the stakeholder conversations that decide whether a working system actually ships, adopts, and outlasts your involvement.",min:178,doms:[6]},
+    {id:"c5",ico:"👥",t:"Team Enablement & Operational Productivity",short:"Team Enablement",
+     d:"Enable a team to adopt a live Claude system and run it without depending on you.",min:45,doms:[7]}
+  ];
+  const SHORT={1:"Solution Design",2:"Prompting & Context",3:"Integration",4:"Evaluation",5:"Governance & Safety",6:"Stakeholders",7:"Enablement"};
+  const TOTAL=COURSES.reduce((s,c)=>s+c.min,0);
+  const KEY="ccarp_course_progress_v1";
+  const load=()=>{try{return JSON.parse(localStorage.getItem(KEY))||{};}catch(e){return{};}};
+  const save=p=>{try{localStorage.setItem(KEY,JSON.stringify(p));}catch(e){}};
+  let prog=load();
+
+  const domChip=n=>`<span class="dchip" style="color:var(--d${n});border-color:var(--d${n})" title="Domain ${n}: ${esc(domById(n).name)}">D${n} · ${SHORT[n]}</span>`;
+
+  function render(){
+    $("#courseList").innerHTML=COURSES.map(c=>{
+      const on=!!prog[c.id];
+      return `<div class="course${on?' done':''}">
+        <button class="ccheck${on?' on':''}" data-c="${c.id}" aria-label="Mark ${esc(c.t)} ${on?'incomplete':'complete'}">${on?'✓':''}</button>
+        <div class="ico">${c.ico}</div>
+        <div class="cbody">
+          <p class="ctitle">${esc(c.t)}</p>
+          <p class="cdesc">${esc(c.d)}</p>
+          <div class="cmeta"><span class="cmin">${c.min} min</span>${c.doms.map(domChip).join("")}</div>
+        </div>
+      </div>`;
+    }).join("");
+    $$("#courseList .ccheck").forEach(b=>b.addEventListener("click",()=>{
+      prog[b.dataset.c]=!prog[b.dataset.c]; save(prog); render();
+    }));
+    update();
+  }
+
+  function update(){
+    const done=COURSES.filter(c=>prog[c.id]);
+    const doneMin=done.reduce((s,c)=>s+c.min,0);
+    const pct=Math.round(doneMin/TOTAL*100);
+    const remain=TOTAL-doneMin;
+    $("#cDone").textContent=`${done.length} / ${COURSES.length}`;
+    $("#cMinTxt").textContent=`${doneMin} of ${TOTAL} min complete`;
+    $("#cPct").textContent=pct+"%";
+    $("#cBar").style.width=pct+"%";
+    $("#cRemainMin").textContent=remain;
+    $("#cLeft").textContent=done.length===COURSES.length
+      ? "🎉 All courses complete — nice work."
+      : `${remain} min (~${(remain/60).toFixed(1)} h) of course left`;
+    schedule(remain);
+  }
+
+  function schedule(remain){
+    const days=Math.min(365,Math.max(1,parseInt($("#cDays").value,10)||1));
+    if(remain<=0){ $("#cPerDay").textContent="done"; $("#cSchedule").innerHTML=""; return; }
+    const per=Math.ceil(remain/days);
+    $("#cPerDay").textContent=per+" min";
+    // greedy day-by-day fill of the remaining courses at `per` minutes/day
+    const queue=COURSES.filter(c=>!prog[c.id]).map(c=>({short:c.short,left:c.min}));
+    const lines=[]; let day=1, budget=per, cur=[];
+    while(queue.length && day<=days && lines.length<21){
+      const c=queue[0], take=Math.min(c.left,budget);
+      cur.push(`${esc(c.short)} ${take}m`);
+      c.left-=take; budget-=take;
+      if(c.left<=0) queue.shift();
+      if(budget<=0 || !queue.length){ lines.push(`<div class="line"><span class="day">Day ${day}</span><span>${cur.join(" · ")}</span></div>`); day++; cur=[]; budget=per; }
+    }
+    if(queue.length) lines.push(`<div class="line"><span class="day">…</span><span class="note">and the rest at the same pace</span></div>`);
+    $("#cSchedule").innerHTML=lines.join("");
+  }
+
+  $("#cReset").addEventListener("click",()=>{ prog={}; save(prog); render(); });
+  $("#cDays").addEventListener("input",update);
+  render();
 })();
 
 /* ---- study guide ---- */
